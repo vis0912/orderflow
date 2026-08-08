@@ -9,6 +9,8 @@ import com.orderflow.entity.OrderItem;
 import com.orderflow.entity.OrderStatus;
 import com.orderflow.entity.Product;
 import com.orderflow.entity.User;
+import com.orderflow.event.OrderCreatedEvent;
+import com.orderflow.event.OrderCreatedItem;
 import com.orderflow.exception.BadRequestException;
 import com.orderflow.exception.ProductNotFoundException;
 import com.orderflow.exception.ResourceNotFoundException;
@@ -32,6 +34,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final OutboxService outboxService;
 
     @Transactional
     public OrderResponse createOrder(
@@ -114,6 +117,28 @@ public class OrderService {
         order.setTotalAmount(total);
 
         Order savedOrder = orderRepository.save(order);
+
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                savedOrder.getId(),
+                savedOrder.getUser().getId(),
+                savedOrder.getTotalAmount(),
+                savedOrder.getCreatedAt(),
+                savedOrder.getItems()
+                        .stream()
+                        .map(item -> new OrderCreatedItem(
+                                item.getProduct().getId(),
+                                item.getQuantity(),
+                                item.getUnitPrice()
+                        ))
+                        .toList()
+        );
+
+        outboxService.saveEvent(
+                "Order",
+                savedOrder.getId().toString(),
+                "OrderCreated",
+                event
+        );
 
         return toResponse(savedOrder);
     }
