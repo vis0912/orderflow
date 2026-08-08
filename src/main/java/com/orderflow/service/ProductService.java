@@ -3,6 +3,7 @@ package com.orderflow.service;
 import com.orderflow.dto.ProductRequest;
 import com.orderflow.dto.ProductResponse;
 import com.orderflow.entity.Product;
+import com.orderflow.exception.ProductNotFoundException;
 import com.orderflow.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,7 @@ public class ProductService {
 
     public ProductResponse getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
 
         return toResponse(product);
     }
