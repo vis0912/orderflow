@@ -2,7 +2,10 @@ package com.orderflow.controller;
 
 import com.orderflow.dto.CreateOrderRequest;
 import com.orderflow.dto.OrderResponse;
+import com.orderflow.dto.PaymentRequest;
+import com.orderflow.dto.PaymentResponse;
 import com.orderflow.service.OrderService;
+import com.orderflow.service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +21,7 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final PaymentService paymentService;
 
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
@@ -56,5 +60,22 @@ public class OrderController {
         return ResponseEntity.ok(
                 orderService.cancelOrder(id, authentication)
         );
+    }
+
+    @PostMapping("/{id}/payment")
+    public ResponseEntity<PaymentResponse> processPayment(
+            @PathVariable Long id,
+            @Valid @RequestBody PaymentRequest request,
+            Authentication authentication) {
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(
+                        paymentService.processPayment(
+                                id,
+                                request,
+                                authentication
+                        )
+                );
     }
 }
