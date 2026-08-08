@@ -1,5 +1,7 @@
 package com.orderflow.controller;
 
+import com.orderflow.dto.LoginRequest;
+import com.orderflow.dto.LoginResponse;
 import com.orderflow.dto.RegisterRequest;
 import com.orderflow.dto.UserResponse;
 import com.orderflow.service.UserService;
@@ -23,5 +25,14 @@ public class UserController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(userService.register(request));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request) {
+
+        return ResponseEntity.ok(
+                userService.login(request)
+        );
     }
 }
