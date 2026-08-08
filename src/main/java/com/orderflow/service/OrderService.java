@@ -22,7 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +49,10 @@ public class OrderService {
 
         BigDecimal total = BigDecimal.ZERO;
 
+        Map<Long, Product> products = new HashMap<>();
+        Map<Long, Integer> requestedQuantities = new HashMap<>();
+
+        // Phase 1: Validate all products and stock
         for (OrderItemRequest itemRequest : request.items()) {
 
             Product product = productRepository
@@ -59,6 +65,27 @@ public class OrderService {
                         "Product is not available: " + product.getName()
                 );
             }
+
+            int totalRequested = requestedQuantities.merge(
+                    itemRequest.productId(),
+                    itemRequest.quantity(),
+                    Integer::sum
+            );
+
+            if (product.getStockQuantity() < totalRequested) {
+                throw new BadRequestException(
+                        "Insufficient stock for product: "
+                                + product.getName()
+                );
+            }
+
+            products.put(itemRequest.productId(), product);
+        }
+
+        // Phase 2: Create order items and deduct stock
+        for (OrderItemRequest itemRequest : request.items()) {
+
+            Product product = products.get(itemRequest.productId());
 
             BigDecimal unitPrice = product.getPrice();
 
@@ -75,6 +102,11 @@ public class OrderService {
                     .build();
 
             order.getItems().add(orderItem);
+
+            product.setStockQuantity(
+                    product.getStockQuantity()
+                            - itemRequest.quantity()
+            );
 
             total = total.add(subtotal);
         }
