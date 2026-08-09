@@ -36,10 +36,20 @@ public class OutboxPublisher {
                     continue;
                 }
 
-                OrderCreatedEvent orderCreatedEvent =
+                OrderCreatedEvent originalEvent =
                         jsonMapper.readValue(
                                 event.getPayload(),
                                 OrderCreatedEvent.class
+                        );
+
+                OrderCreatedEvent orderCreatedEvent =
+                        new OrderCreatedEvent(
+                                event.getId(),
+                                originalEvent.orderId(),
+                                originalEvent.userId(),
+                                originalEvent.totalAmount(),
+                                originalEvent.createdAt(),
+                                originalEvent.items()
                         );
 
                 kafkaTemplate.send(

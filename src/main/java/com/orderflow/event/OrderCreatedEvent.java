@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record OrderCreatedEvent(
+        Long eventId,
         Long orderId,
         Long userId,
         BigDecimal totalAmount,
